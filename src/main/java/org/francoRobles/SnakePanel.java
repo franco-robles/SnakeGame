@@ -7,23 +7,17 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Random;
-public class SnakePanel extends JPanel implements ActionListener {
 
-    static final int SCREEN_WIDTH = 600;
-    static final int SCREEN_HEIGHT = 600;
-    static final int UNIT_SIZE = 25;
-    static final int GAME_UNITS = (SCREEN_WIDTH*SCREEN_HEIGHT)/(UNIT_SIZE*UNIT_SIZE);
-    static final int DELAY = 50;
-    int x[] = new int[GAME_UNITS];
-    int y[] = new int[GAME_UNITS];
-    int bodyParts = 2;
-    int applesEatens=0;
+import static org.francoRobles.util.*;
+
+public class SnakePanel extends JPanel implements ActionListener {
+    Snake snake = new Snake();
     int appleX;
     int appleY;
-    Direction direction = Direction.Right;
+
     Timer timer;
-    boolean running = false;
     Random random;
+    boolean running = false;
 
 
     //methods
@@ -45,11 +39,7 @@ public class SnakePanel extends JPanel implements ActionListener {
     }
 
     public void resetGame(){
-        x =  new int[GAME_UNITS];
-        y =  new int[GAME_UNITS];
-        bodyParts = 15;
-        applesEatens=0;
-        direction = Direction.Right;
+        snake.resetSnake();
         timer.restart();
         running = true;
         newApple();
@@ -77,68 +67,75 @@ public class SnakePanel extends JPanel implements ActionListener {
                 g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
                 g.drawLine(0, i * UNIT_SIZE, SCREEN_HEIGHT, i * UNIT_SIZE);
             }
-            drawApple(g);
             drawSnake(g);
+            drawApple(g);
             drawScore(g);
         }else {
             gameOver(g);
         }
-
+       Toolkit.getDefaultToolkit().sync();
 
     }
 
     public void newApple(){
-        appleX = random.nextInt((int)(SCREEN_WIDTH/UNIT_SIZE))*UNIT_SIZE;
-        appleY = random.nextInt((int)(SCREEN_HEIGHT/UNIT_SIZE))*UNIT_SIZE;
+        boolean invalidPosition = true;
+        while(invalidPosition){
+            int appleXAux = random.nextInt((int)(SCREEN_WIDTH/UNIT_SIZE))*UNIT_SIZE;
+            int appleYAux = random.nextInt((int)(SCREEN_HEIGHT/UNIT_SIZE))*UNIT_SIZE;
+            if(isFreePosition(appleYAux, appleXAux)){
+                appleX = appleXAux;
+                appleY = appleYAux;
+                invalidPosition = false;
+            }
+        }
+
+
     }
 
     public void move(){
-        for (int i = this.bodyParts; i > 0; i--) {
-            x[i] = x[i-1];
-            y[i] = y[i-1];
+        for (int i = snake.getBodyParts(); i > 0; i--) {
+            snake.x[i] = snake.x[i-1];
+            snake.y[i] = snake.y[i-1];
         }
-        switch (direction){
-            case UP -> y[0] = y[0]-UNIT_SIZE;
-            case Down -> y[0] = y[0]+UNIT_SIZE;
-            case Left -> x[0] = x[0]-UNIT_SIZE;
-            case Right -> x[0] = x[0]+UNIT_SIZE;
+        switch (snake.getDirection()){
+            case UP -> snake.y[0] = snake.y[0]-UNIT_SIZE;
+            case Down -> snake.y[0] = snake.y[0]+UNIT_SIZE;
+            case Left -> snake.x[0] = snake.x[0]-UNIT_SIZE;
+            case Right -> snake.x[0]= snake.x[0]+UNIT_SIZE;
         }
 
     }
 
     public void checkApple(){
         //check if head collides with apple
-        if(x[0] == this.appleX && y[0]==this.appleY){
-            applesEatens+=1;
-            bodyParts+=1;
+        if(snake.x[0] == this.appleX && snake.y[0]==this.appleY){
+            snake.addEatensApple();
+            snake.addBodyPart();
             newApple();
         }
     }
 
     public void checkCollision(){
         //check if head collides with body
-        for(int i = this.bodyParts; i > 0; i--){
-            if (x[0]==x[i] && y[0]==y[i]){
+        for(int i = snake.getBodyParts(); i > 0; i--){
+            if (snake.x[0]==snake.x[i] && snake.y[0]==snake.y[i]){
                 running =  false;
             }
         }
         //check if head collides with bounds
-        if(x[0]<0 || y[0]<0 || x[0]> SCREEN_WIDTH || y[0]>SCREEN_HEIGHT){
-            running =  false;
-        }
+       if(snake.x[0]<0 || snake.y[0]<0 || snake.x[0]> SCREEN_WIDTH-UNIT_SIZE || snake.y[0]>SCREEN_HEIGHT-UNIT_SIZE){
+           running =  false;
+       }
         if(!running) {
             timer.stop();
         }
-
     }
-
-
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if(this.running){
-            move();
             checkApple();
+            move();
             checkCollision();
         }
         repaint();
@@ -147,29 +144,30 @@ public class SnakePanel extends JPanel implements ActionListener {
     public class MyKeyAdapter extends KeyAdapter{
         @Override
         public void keyPressed(KeyEvent e) {
-            char ch = e.getKeyChar();
+            int ch = e.getKeyCode();
             switch (ch){
-                case 'w' -> {
-                    if(direction != Direction.Down){
-                        direction = Direction.UP;
+                case 87 -> {
+                    if(snake.getDirection() != Direction.Down){
+
+                        snake.setDirection(Direction.UP);
                     } ;
                 }
-                case  's' -> {
-                    if(direction != Direction.UP){
-                        direction = Direction.Down;
+                case  83 -> {
+                    if(snake.getDirection() != Direction.UP){
+                        snake.setDirection(Direction.Down);
                     } ;
                 }
-                case  'a' -> {
-                    if(direction != Direction.Right){
-                        direction = Direction.Left;
+                case  65 -> {
+                    if(snake.getDirection() != Direction.Right){
+                        snake.setDirection(Direction.Left);
                     } ;
                 }
-                case  'd' -> {
-                    if(direction != Direction.Left){
-                        direction = Direction.Right;
+                case  68 -> {
+                    if(snake.getDirection() != Direction.Left){
+                        snake.setDirection(Direction.Right);
                     } ;
                 }
-                case 'h' -> resetGame();
+                case 72 -> resetGame();
 
             }
         }
@@ -182,13 +180,18 @@ public class SnakePanel extends JPanel implements ActionListener {
     }
 
     private void drawSnake(Graphics g){
-        for (int i = 0; i < this.bodyParts; i++) {
+        int red = 45;
+        int green = 180;
+        int blue = 0;
+
+        for (int i = 0; i < snake.getBodyParts(); i++) {
             if (i == 0) {
-                g.setColor(Color.GREEN);
-                g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
+                g.setColor(Color.green);
+                g.fillRect(snake.x[i], snake.y[i], UNIT_SIZE, UNIT_SIZE);
             } else {
-                g.setColor(new Color(45, 180, 0));
-                g.fillRect(x[i], y[i], UNIT_SIZE, UNIT_SIZE);
+                Color bodyColor = new Color(red,green,blue);
+                g.setColor(bodyColor);
+                g.fillOval(snake.x[i], snake.y[i], UNIT_SIZE, UNIT_SIZE);
             }
         }
     }
@@ -197,7 +200,17 @@ public class SnakePanel extends JPanel implements ActionListener {
         g.setColor(Color.red);
         g.setFont( new Font("Ink Free",Font.BOLD, 40));
         FontMetrics metrics1 = getFontMetrics(g.getFont());
-        g.drawString("Score: "+ applesEatens, (SCREEN_WIDTH - metrics1.stringWidth("Score: "+applesEatens))/2, g.getFont().getSize());
+        g.drawString("Score: "+ snake.getApplesEatens(), (SCREEN_WIDTH - metrics1.stringWidth("Score: "+snake.getApplesEatens()))/2, g.getFont().getSize());
     }
+
+    private boolean isFreePosition(int appleYAux, int appleXAux){
+        for (int i = 0; i < snake.getBodyParts(); i++) {
+            if (snake.x[i]==appleXAux && snake.y[i]==appleYAux){
+                return false;
+            }
+        }
+        return true;
+    }
+
 
 }
