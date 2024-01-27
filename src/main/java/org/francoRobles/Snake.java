@@ -20,7 +20,19 @@ public class Snake {
         this.applesEatens = 0;
         this.setDirection(Direction.Right);
     }
+    public void move(){
+        for (int i = this.getBodyParts(); i > 0; i--) {
+            this.x[i] = this.x[i-1];
+            this.y[i] = this.y[i-1];
+        }
+        switch (this.getDirection()){
+            case UP -> this.y[0] = this.y[0]-UNIT_SIZE;
+            case Down -> this.y[0] = this.y[0]+UNIT_SIZE;
+            case Left -> this.x[0] = this.x[0]-UNIT_SIZE;
+            case Right -> this.x[0]= this.x[0]+UNIT_SIZE;
+        }
 
+    }
     public Direction getDirection() {
         return direction;
     }
@@ -36,12 +48,15 @@ public class Snake {
     public void setApplesEatens(int applesEatens) {
         this.applesEatens = applesEatens;
     }
+
     public void addEatensApple() {
         this.applesEatens += 1;
     }
+
     public void addBodyPart() {
         this.bodyParts += 1;
     }
+
     public int getBodyParts() {
         return bodyParts;
     }
