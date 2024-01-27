@@ -31,19 +31,7 @@ public class SnakePanel extends JPanel implements ActionListener {
         this.setBackground(Color.black);
         this.setFocusable(true);
         this.addKeyListener(new MyKeyAdapter());
-        try {
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File("C:\\Users\\franco\\Documents\\javaIntellij\\proyectos\\SnakeGame\\src\\main\\java\\org\\francoRobles\\music\\eat.wav"));
-            sonidoColision = AudioSystem.getClip();
-            sonidoColision.open(audioInputStream);
-
-            AudioInputStream audioInputStreamBack = AudioSystem.getAudioInputStream(new File("C:\\Users\\franco\\Documents\\javaIntellij\\proyectos\\SnakeGame\\src\\main\\java\\org\\francoRobles\\music\\audio.wav"));
-            gameSound = AudioSystem.getClip();
-            gameSound.open(audioInputStreamBack);
-        } catch (IOException | UnsupportedAudioFileException e) {
-            e.printStackTrace();
-        } catch (LineUnavailableException e) {
-            throw new RuntimeException(e);
-        }
+        loadMusic();
         startGame();
     }
 
@@ -69,7 +57,7 @@ public class SnakePanel extends JPanel implements ActionListener {
         drawScore(g);
         //stop sound
         gameSound.stop();
-        gameSound.setFramePosition(0);
+        gameSound.setFramePosition(0);//reset the clip
         //Game Over text
         g.setColor(Color.red);
         g.setFont( new Font("Ink Free",Font.HANGING_BASELINE, 75));
@@ -85,11 +73,6 @@ public class SnakePanel extends JPanel implements ActionListener {
     public void draw(Graphics g){
         if(running){
             paintBackground(g);
-            for (int i = 0; i < SCREEN_HEIGHT / UNIT_SIZE; i++) {
-                g.setColor(new Color(197, 1, 226).darker());
-                g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
-                g.drawLine(0, i * UNIT_SIZE, SCREEN_HEIGHT, i * UNIT_SIZE);
-            }
             drawSnake(g);
             drawApple(g);
             drawScore(g);
@@ -112,20 +95,6 @@ public class SnakePanel extends JPanel implements ActionListener {
             }
         }
 
-
-    }
-
-    public void move(){
-        for (int i = snake.getBodyParts(); i > 0; i--) {
-            snake.x[i] = snake.x[i-1];
-            snake.y[i] = snake.y[i-1];
-        }
-        switch (snake.getDirection()){
-            case UP -> snake.y[0] = snake.y[0]-UNIT_SIZE;
-            case Down -> snake.y[0] = snake.y[0]+UNIT_SIZE;
-            case Left -> snake.x[0] = snake.x[0]-UNIT_SIZE;
-            case Right -> snake.x[0]= snake.x[0]+UNIT_SIZE;
-        }
 
     }
 
@@ -163,7 +132,7 @@ public class SnakePanel extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if(this.running){
             checkApple();
-            move();
+            snake.move();
             checkCollision();
         }
         repaint();
@@ -174,27 +143,27 @@ public class SnakePanel extends JPanel implements ActionListener {
         public void keyPressed(KeyEvent e) {
             int ch = e.getKeyCode();
             switch (ch){
-                case 87 -> {
+                case 87 -> { // w
                     if(snake.getDirection() != Direction.Down){
                         snake.setDirection(Direction.UP);
                     } ;
                 }
-                case  83 -> {
+                case  83 -> { // s
                     if(snake.getDirection() != Direction.UP){
                         snake.setDirection(Direction.Down);
                     } ;
                 }
-                case  65 -> {
+                case  65 -> { // a
                     if(snake.getDirection() != Direction.Right){
                         snake.setDirection(Direction.Left);
                     } ;
                 }
-                case  68 -> {
+                case  68 -> {// d
                     if(snake.getDirection() != Direction.Left){
                         snake.setDirection(Direction.Right);
                     } ;
                 }
-                case 72 -> resetGame();
+                case 82 -> resetGame(); // r
 
             }
         }
@@ -257,12 +226,28 @@ public class SnakePanel extends JPanel implements ActionListener {
 
                 // Establece el color deseado para los cuadrados:
                 boolean isBlack = (col + row) % 2 == 0;
-                Color color = isBlack ? new Color(54, 157, 12) : new Color(43, 131, 6);
+                Color color = isBlack ? new Color(55, 164, 11) : new Color(43, 131, 6);
 
                 // Pinta el cuadrado en la posición actual:
                 g.setColor(color);
                 g.fillRect(x, y, UNIT_SIZE, UNIT_SIZE);
             }
+        }
+    }
+
+    private void loadMusic(){
+        try {
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File("C:\\Users\\franco\\Documents\\javaIntellij\\proyectos\\SnakeGame\\src\\main\\java\\org\\francoRobles\\music\\eat.wav"));
+            sonidoColision = AudioSystem.getClip();
+            sonidoColision.open(audioInputStream);
+
+            AudioInputStream audioInputStreamBack = AudioSystem.getAudioInputStream(new File("C:\\Users\\franco\\Documents\\javaIntellij\\proyectos\\SnakeGame\\src\\main\\java\\org\\francoRobles\\music\\audio.wav"));
+            gameSound = AudioSystem.getClip();
+            gameSound.open(audioInputStreamBack);
+        } catch (IOException | UnsupportedAudioFileException e) {
+            e.printStackTrace();
+        } catch (LineUnavailableException e) {
+            throw new RuntimeException(e);
         }
     }
 }
