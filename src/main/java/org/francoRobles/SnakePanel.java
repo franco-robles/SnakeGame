@@ -1,11 +1,14 @@
 package org.francoRobles;
 
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.Random;
 
 import static org.francoRobles.util.*;
@@ -14,7 +17,8 @@ public class SnakePanel extends JPanel implements ActionListener {
     Snake snake = new Snake();
     int appleX;
     int appleY;
-
+    private Clip sonidoColision;
+    private Clip gameSound;
     Timer timer;
     Random random;
     boolean running = false;
@@ -27,6 +31,19 @@ public class SnakePanel extends JPanel implements ActionListener {
         this.setBackground(Color.black);
         this.setFocusable(true);
         this.addKeyListener(new MyKeyAdapter());
+        try {
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File("C:\\Users\\franco\\Documents\\javaIntellij\\proyectos\\SnakeGame\\src\\main\\java\\org\\francoRobles\\music\\eat.wav"));
+            sonidoColision = AudioSystem.getClip();
+            sonidoColision.open(audioInputStream);
+
+            AudioInputStream audioInputStreamBack = AudioSystem.getAudioInputStream(new File("C:\\Users\\franco\\Documents\\javaIntellij\\proyectos\\SnakeGame\\src\\main\\java\\org\\francoRobles\\music\\audio.wav"));
+            gameSound = AudioSystem.getClip();
+            gameSound.open(audioInputStreamBack);
+        } catch (IOException | UnsupportedAudioFileException e) {
+            e.printStackTrace();
+        } catch (LineUnavailableException e) {
+            throw new RuntimeException(e);
+        }
         startGame();
     }
 
@@ -35,6 +52,7 @@ public class SnakePanel extends JPanel implements ActionListener {
         newApple();
         running = true;
         timer = new Timer(DELAY, this);
+        gameSound();
         timer.start();
     }
 
@@ -42,16 +60,19 @@ public class SnakePanel extends JPanel implements ActionListener {
         snake.resetSnake();
         timer.restart();
         running = true;
+        gameSound();
         newApple();
-
     }
 
     public void gameOver(Graphics g){
         //score text
         drawScore(g);
+        //stop sound
+        gameSound.stop();
+        gameSound.setFramePosition(0);
         //Game Over text
         g.setColor(Color.red);
-        g.setFont( new Font("Ink Free",Font.BOLD, 75));
+        g.setFont( new Font("Ink Free",Font.HANGING_BASELINE, 75));
         FontMetrics metrics2 = getFontMetrics(g.getFont());
         g.drawString("Game Over", (SCREEN_WIDTH - metrics2.stringWidth("Game Over"))/2, SCREEN_HEIGHT/2);
     }
@@ -63,7 +84,9 @@ public class SnakePanel extends JPanel implements ActionListener {
 
     public void draw(Graphics g){
         if(running){
+            paintBackground(g);
             for (int i = 0; i < SCREEN_HEIGHT / UNIT_SIZE; i++) {
+                g.setColor(new Color(197, 1, 226).darker());
                 g.drawLine(i * UNIT_SIZE, 0, i * UNIT_SIZE, SCREEN_HEIGHT);
                 g.drawLine(0, i * UNIT_SIZE, SCREEN_HEIGHT, i * UNIT_SIZE);
             }
@@ -109,9 +132,14 @@ public class SnakePanel extends JPanel implements ActionListener {
     public void checkApple(){
         //check if head collides with apple
         if(snake.x[0] == this.appleX && snake.y[0]==this.appleY){
+            // Reproducir el sonido
+            sonidoColision.start();
+            //Reiniciar la posición del clip de sonido para la próxima reproducción
+            sonidoColision.setFramePosition(0);
             snake.addEatensApple();
             snake.addBodyPart();
             newApple();
+
         }
     }
 
@@ -148,7 +176,6 @@ public class SnakePanel extends JPanel implements ActionListener {
             switch (ch){
                 case 87 -> {
                     if(snake.getDirection() != Direction.Down){
-
                         snake.setDirection(Direction.UP);
                     } ;
                 }
@@ -189,7 +216,7 @@ public class SnakePanel extends JPanel implements ActionListener {
                 g.setColor(Color.green);
                 g.fillRect(snake.x[i], snake.y[i], UNIT_SIZE, UNIT_SIZE);
             } else {
-                Color bodyColor = new Color(red,green,blue);
+                Color bodyColor = new Color(red,green,blue).brighter();
                 g.setColor(bodyColor);
                 g.fillOval(snake.x[i], snake.y[i], UNIT_SIZE, UNIT_SIZE);
             }
@@ -198,7 +225,7 @@ public class SnakePanel extends JPanel implements ActionListener {
 
     private void drawScore(Graphics g){
         g.setColor(Color.red);
-        g.setFont( new Font("Ink Free",Font.BOLD, 40));
+        g.setFont(new Font("Arial", Font.PLAIN, 30));
         FontMetrics metrics1 = getFontMetrics(g.getFont());
         g.drawString("Score: "+ snake.getApplesEatens(), (SCREEN_WIDTH - metrics1.stringWidth("Score: "+snake.getApplesEatens()))/2, g.getFont().getSize());
     }
@@ -212,5 +239,30 @@ public class SnakePanel extends JPanel implements ActionListener {
         return true;
     }
 
+    private void gameSound(){
+        gameSound.start();
+        gameSound.setLoopPoints(0, gameSound.getFrameLength()-10);
+        gameSound.loop(Clip.LOOP_CONTINUOUSLY);
+    }
+    // Método para pintar el fondo:
+    public void paintBackground(Graphics g) {
+        int numRows = SCREEN_HEIGHT / UNIT_SIZE;
+        int numCols = SCREEN_WIDTH / UNIT_SIZE;
 
+        // Recorre cada fila y columna para pintar los cuadrados:
+        for (int row = 0; row < numRows; row++) {
+            for (int col = 0; col < numCols; col++) {
+                int x = col * UNIT_SIZE;
+                int y = row * UNIT_SIZE;
+
+                // Establece el color deseado para los cuadrados:
+                boolean isBlack = (col + row) % 2 == 0;
+                Color color = isBlack ? new Color(54, 157, 12) : new Color(43, 131, 6);
+
+                // Pinta el cuadrado en la posición actual:
+                g.setColor(color);
+                g.fillRect(x, y, UNIT_SIZE, UNIT_SIZE);
+            }
+        }
+    }
 }
