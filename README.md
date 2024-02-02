@@ -16,7 +16,7 @@ Just download the proyect  and compile
 |key| action |
 |-----|-----|
 | w | up |
-| s | sown |
+| s | down |
 | a | left  |
 | d | right |
 | r | reset game | 
